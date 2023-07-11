@@ -26,5 +26,11 @@ defmodule GerbileImv.Scene.ImageZoom do
 
     {:ok, scene}
   end
+  @impl Scenic.Scene
+  def handle_input(inp, _, scene)do
+    IO.inspect(inp)
+    {:noreply, scene}
+  end
+
 
 end

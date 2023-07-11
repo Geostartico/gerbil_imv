@@ -3,6 +3,9 @@ defmodule GerbileImv.Component.Image do
 
   import Scenic.Primitives, only: [{:text, 3}, {:rect, 3}]
   import Evision
+  @scroll_factor  0.01
+  @speed 0.00001
+  @speed_tran 10
 
 
   @impl Scenic.Component
@@ -51,15 +54,71 @@ defmodule GerbileImv.Component.Image do
     Scenic.Assets.Stream.put("loaded_image",stream)
     scale = {com_height/height, com_height/height}
     graph = Scenic.Graph.build()
-            |> rect({width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0})
+            |> rect({width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image)
 
     scene = Scenic.Scene.assign(scene, :graph, graph)
-    scene = push_graph(scene, graph)
+            |> push_graph(graph)
 
     IO.inspect(opts[:id])
-    :ok = capture_input(scene, [:key, :cursor_pos, :cursor_button, :cursor_scroll])
-    {:ok, Scenic.Scene.assign(scene, :id, opts[:id])
-}
+    :ok = capture_input(scene, [:key, :cursor_button, :cursor_scroll])
+    scene = Scenic.Scene.assign(scene, :tran, {0,0})
+            |> Scenic.Scene.assign(:dim, {width,height})
+            |> Scenic.Scene.assign(:scale, scale)
+    {:ok, Scenic.Scene.assign(scene, :id, opts[:id])}
+  end
+
+  @impl Scenic.Scene
+  def handle_input({:cursor_scroll, {{_, sc}, {pos_x, pos_y}}}, _, scene) do
+    IO.puts("scroll #{sc}")
+    scene = if(sc != 0)do
+      {:ok, {offset_x, offset_y}} = Scenic.Scene.fetch(scene, :tran)
+      {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
+      {:ok, {width, height}} = Scenic.Scene.fetch(scene, :dim)
+      {:ok, graph} = Scenic.Scene.fetch(scene, :graph)
+      scale = if(sc < 0) do
+        scale+@scroll_factor
+      else
+        scale-@scroll_factor
+      end
+      offset_x = offset_x - pos_x * scale * @speed * -sc * width 
+      offset_y = offset_y - pos_y * scale * @speed * -sc * height
+      IO.puts("scale:#{scale}")
+      scene = Scenic.Scene.assign(scene, :scale, {scale,scale})
+      scene = Scenic.Scene.assign(scene, :tran, {offset_x,offset_y})
+      graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))
+      Scenic.Scene.push_graph(scene,graph)
+    else
+      scene
+    end
+    {:noreply, scene}
+  end
+  @impl Scenic.Scene
+  def handle_input({:key, {key, i, _}}, _, scene) do
+    if(i != 0) do
+      {:ok, {offset_x, offset_y}} = Scenic.Scene.fetch(scene, :tran)
+      {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
+      {:ok, {width, height}} = Scenic.Scene.fetch(scene, :dim)
+
+      {move_x, move_y} = case key do
+        :key_h -> {1, 0}
+        :key_j -> {0, -1}
+        :key_k -> {0, 1}
+        :key_l -> {-1, 0}
+        _ -> {0,0}
+      end
+
+      offset_x = offset_x + move_x * @speed_tran 
+      offset_y = offset_y + move_y * @speed_tran 
+
+      {:ok, graph} = Scenic.Scene.fetch(scene, :graph)
+
+      scene = Scenic.Scene.assign(scene, :tran, {offset_x,offset_y})
+      graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))
+      
+      {:noreply, Scenic.Scene.push_graph(scene,graph)}
+      else
+        {:noreply, scene}
+      end
   end
 
   @impl Scenic.Scene
