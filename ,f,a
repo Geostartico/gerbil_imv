@@ -1,0 +1,69 @@
+defmodule GerbileImv.Component.Image do
+  use Scenic.Component
+
+  import Scenic.Primitives, only: [{:text, 3}, {:rect, 3}]
+  import Evision
+
+
+  @impl Scenic.Component
+  def validate(data) do
+    IO.inspect(data)
+    if(validate_path(data) && validate_dim(data)) do
+      {:ok, data}
+    else
+      {:error, "invalid build input"}
+    end
+  end
+    
+  defp validate_path(data) do
+    case data do
+      %{path: str} -> if(is_binary(str)) do
+          IO.puts("bene")
+          true
+        else
+          false
+        end
+      _ -> false
+    end
+  end
+
+  defp validate_dim(data) do
+    case data do
+      %{dim: {width, height}} -> if((is_integer(width) || is_float(width)) && (is_integer(height) || is_float(height))) do
+          IO.puts("bene")
+          true
+        else
+          false
+        end
+      _ -> false
+    end
+  end
+
+  @impl Scenic.Scene
+  def init(scene, data, opts) do
+      %{path: path} = data
+      %{dim: {com_width, com_height}} = data
+
+      img = Evision.imread(path) 
+            |> Evision.Mat.to_nx()
+      {height, width, _} = Nx.shape(img)
+    
+      path = Path.expand(path)
+      {:ok, file} = path |> File.read
+      {:ok, stream} = file |> Scenic.Assets.Stream.Image.from_binary
+      Scenic.Assets.Stream.put("loaded_image",stream)
+      scale = {com_width/width, com_height/height}
+      graph = Scenic.Graph.build()
+              |> rect({com_width,com_height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0})
+    graph =
+      Scenic.Graph.build(
+        font_size: 11,
+        font: :roboto_mono,
+      )
+      |> rect({com_width,com_height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0})
+
+    scene = push_graph(scene, graph)
+
+    {:ok, scene}
+  end
+end

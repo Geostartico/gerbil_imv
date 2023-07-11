@@ -20,22 +20,27 @@
       img = Evision.imread("/home/geostartico/Pictures/gyro.jpg") 
             |> Evision.Mat.to_nx()
       {height, width, _} = Nx.shape(img)
-      IO.inspect(Nx.shape(img))
-      stream = Bitmap.build(:rgb, width, height)
-      img = Nx.to_list(img)
-      #IO.inspect(img)
-      stream = insert_line_stream(img,stream, 0)
-      stream = Bitmap.commit(stream)
-      Scenic.Assets.Stream.put("loaded_image",stream)
+      #IO.inspect(Nx.shape(img))
+      #stream = Bitmap.build(:rgb, width, height)
+      #img = Nx.to_list(img)
+      ##IO.inspect(img)
+      #stream = insert_line_stream(img,stream, 0)
+      #stream = Bitmap.commit(stream)
+      #Scenic.Assets.Stream.put("loaded_image",stream)
       #IO.puts("#{img}")
+      {:ok, file} = "/home/geostartico/Pictures/gyro.jpg" |> File.read
+      IO.inspect(file)
+      {:ok, stream} = file |> Scenic.Assets.Stream.Image.from_binary
+      Scenic.Assets.Stream.put("loaded_image",stream)
       {:ok, view_port} = Scenic.ViewPort.info(:main_viewport)
       %{size: size} = view_port
       {win_width, win_height} = size
-      scale = {win_height/height, win_height/height}
+      scale = {500/width, 500/height}
       graph = graph() 
-              |> rect({width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0})
+              |> rect({width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {100,100})
       scene = push_graph( scene, graph )
       scene = assign(scene, :num_labels, 0)
+      :ok = capture_input(scene, [:key, :cursor_pos, :cursor_button, :cursor_scroll])
       {:ok, scene}
     end
 
@@ -48,6 +53,12 @@
       graph = insert_text(lab, graph())
       scene = push_graph(scene, graph)
       #IO.puts(Integer.to_string(length(Scenic.Graph.get(graph(), :questo))) <> "")
+      {:noreply, scene}
+    end
+
+    @impl Scenic.Scene
+    def handle_input(inp, _, scene) do
+      IO.inspect(inp)
       {:noreply, scene}
     end
 
