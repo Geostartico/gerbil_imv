@@ -64,6 +64,7 @@ defmodule GerbileImv.Component.Nav do
            {"Sprites", GerbileImv.Scene.Sprites},
            {"Example", GerbileImv.Scene.Example},
            {"Image", GerbileImv.Scene.ImageZoom},
+           {"Crop", GerbileImv.Scene.ImageCrop},
            {"Directory", GerbileImv.Scene.DirTree}
          ], current_scene},
         id: :nav,

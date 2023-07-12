@@ -17,6 +17,7 @@
 
     @impl Scenic.Scene
     def init( scene, _param, _opts ) do
+      IO.inspect(Evision.imread("/home/geostartico/Documents/c.html"))
       img = Evision.imread("/home/geostartico/Pictures/gyro.jpg") 
             |> Evision.Mat.to_nx()
       {height, width, _} = Nx.shape(img)

@@ -69,7 +69,6 @@ defmodule GerbileImv.Component.Image do
 
   @impl Scenic.Scene
   def handle_input({:cursor_scroll, {{_, sc}, {pos_x, pos_y}}}, _, scene) do
-    IO.puts("scroll #{sc}")
     scene = if(sc != 0)do
       {:ok, {offset_x, offset_y}} = Scenic.Scene.fetch(scene, :tran)
       {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
@@ -82,7 +81,6 @@ defmodule GerbileImv.Component.Image do
       end
       offset_x = offset_x - pos_x * scale * @speed * -sc * width 
       offset_y = offset_y - pos_y * scale * @speed * -sc * height
-      IO.puts("scale:#{scale}")
       scene = Scenic.Scene.assign(scene, :scale, {scale,scale})
       scene = Scenic.Scene.assign(scene, :tran, {offset_x,offset_y})
       graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))

@@ -19,7 +19,6 @@ defmodule GerbileImv.Scene.DirTree do
 
     @impl Scenic.Scene
     def init( scene, param, _opts ) do
-      IO.puts("SI PARTE")
       {:ok, view_port} = Scenic.ViewPort.info(:main_viewport)
       %{size: size} = view_port
       {win_width, win_height} = size
@@ -55,16 +54,23 @@ defmodule GerbileImv.Scene.DirTree do
     @impl Scenic.Scene
     def handle_event({:click, id}, _, scene) when is_binary(id) do
       IO.puts("cliccato: #{id}")
-      if(Path.expand(id) |> File.dir?()) do
-        Scenic.ViewPort.set_root(scene.viewport, GerbileImv.Scene.DirTree, %{path: id <> "/"})
-      else 
-        raise "NOT YET IMPLEMENTED"
+      cond do
+        (Path.expand(id) |> File.dir?()) ->
+          Scenic.ViewPort.set_root(scene.viewport, GerbileImv.Scene.DirTree, %{path: id <> "/"})
+        true ->
+          res = id |> Evision.imread
+          case res do
+            {:error, _} ->
+              raise "NOT YET IMPLEMENTED"
+            _ -> 
+              Scenic.ViewPort.set_root(scene.viewport, GerbileImv.Scene.ImageZoom, %{path: id})
+          end
       end
       {:noreply, scene}
     end
 
     @impl Scenic.Scene
-    def handle_event({:value_changed, id, value}, _, scene) do
+    def handle_event({:value_changed, _id, value}, _, scene) do
       IO.puts("slidato: #{value}")
       #{:ok, dir} = fetch(scene, :curdir)
       #Scenic.ViewPort.set_root(scene.viewport, GerbileImv.Scene.DirTree, %{path: dir, offset: value})
@@ -101,7 +107,7 @@ defmodule GerbileImv.Scene.DirTree do
     end
 
     defp render_buttons(graph, [head | tail], {offsetx, offsety}, begin_x, begin_y, max_x, max_y) do
-      IO.inspect({head, offsetx})
+      #IO.inspect({head, offsetx})
       cond do
 
         offsetx + @button_width > max_x - @bottom_x ->
