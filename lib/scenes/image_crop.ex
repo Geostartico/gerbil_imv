@@ -29,8 +29,15 @@ defmodule GerbileImv.Scene.ImageCrop do
 
     {:ok, scene}
   end
+
   @impl Scenic.Scene
   def handle_input(inp, _, scene)do
+    IO.inspect(inp)
+    {:noreply, scene}
+  end
+
+  @impl Scenic.Scene
+  def handle_event(inp, _, scene)do
     IO.inspect(inp)
     {:noreply, scene}
   end
