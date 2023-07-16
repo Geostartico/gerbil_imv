@@ -5,7 +5,7 @@ defmodule GerbileImv.Component.Image do
   import Evision
   @scroll_factor  0.01
   @speed 0.00001
-  @speed_tran 10
+  @speed_tran 100
 
 
   @impl Scenic.Component
@@ -51,19 +51,20 @@ defmodule GerbileImv.Component.Image do
     path = Path.expand(path)
     {:ok, file} = path |> File.read
     {:ok, stream} = file |> Scenic.Assets.Stream.Image.from_binary
-    Scenic.Assets.Stream.put("loaded_image",stream)
-    scale = {com_height/height, com_height/height}
+    Scenic.Assets.Stream.put("loaded_image#{path}",stream)
+    scale = {com_width/width, com_width/width}
     graph = Scenic.Graph.build()
-            |> rect({width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image)
+            |> rect({width,height}, fill: {:stream, "loaded_image#{path}"}, scale: scale, pin: {0,0}, id: :image, input: [:cursor_scroll])
 
     scene = Scenic.Scene.assign(scene, :graph, graph)
             |> push_graph(graph)
 
     IO.inspect(opts[:id])
-    :ok = capture_input(scene, [:key, :cursor_button, :cursor_scroll])
+    :ok = capture_input(scene, [:key])
     scene = Scenic.Scene.assign(scene, :tran, {0,0})
             |> Scenic.Scene.assign(:dim, {width,height})
             |> Scenic.Scene.assign(:scale, scale)
+            |> Scenic.Scene.assign(:scale, path)
     {:ok, Scenic.Scene.assign(scene, :id, opts[:id])}
   end
 
@@ -74,6 +75,7 @@ defmodule GerbileImv.Component.Image do
       {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
       {:ok, {width, height}} = Scenic.Scene.fetch(scene, :dim)
       {:ok, graph} = Scenic.Scene.fetch(scene, :graph)
+      {:ok, path} = Scenic.Scene.fetch(scene, :path)
       scale = if(sc < 0) do
         scale+@scroll_factor
       else
@@ -83,7 +85,7 @@ defmodule GerbileImv.Component.Image do
       offset_y = offset_y - pos_y * scale * @speed * -sc * height
       scene = Scenic.Scene.assign(scene, :scale, {scale,scale})
       scene = Scenic.Scene.assign(scene, :tran, {offset_x,offset_y})
-      graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))
+      graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image#{path}"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))
       Scenic.Scene.push_graph(scene,graph)
     else
       scene
@@ -96,6 +98,7 @@ defmodule GerbileImv.Component.Image do
       {:ok, {offset_x, offset_y}} = Scenic.Scene.fetch(scene, :tran)
       {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
       {:ok, {width, height}} = Scenic.Scene.fetch(scene, :dim)
+      {:ok, path} = Scenic.Scene.fetch(scene, :path)
 
       {move_x, move_y} = case key do
         :key_h -> {1, 0}
@@ -111,7 +114,7 @@ defmodule GerbileImv.Component.Image do
       {:ok, graph} = Scenic.Scene.fetch(scene, :graph)
 
       scene = Scenic.Scene.assign(scene, :tran, {offset_x,offset_y})
-      graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))
+      graph = Scenic.Graph.modify(graph, :image, &rect(&1,{width,height}, fill: {:stream, "loaded_image#{path}"}, scale: scale, pin: {0,0}, id: :image, translate: {offset_x,offset_y}))
       
       {:noreply, Scenic.Scene.push_graph(scene,graph)}
       else
