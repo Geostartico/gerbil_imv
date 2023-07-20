@@ -51,6 +51,8 @@ defmodule GerbileImv.Component.Image do
     path = Path.expand(path)
     {:ok, file} = path |> File.read
     {:ok, stream} = file |> Scenic.Assets.Stream.Image.from_binary
+    #Scenic.Assets.Stream.put("loaded_image",stream)
+    #IO.puts("STREAM INSERTED")
     Scenic.Assets.Stream.put("loaded_image#{path}",stream)
     scale = {com_width/width, com_width/width}
     graph = Scenic.Graph.build()
@@ -64,7 +66,7 @@ defmodule GerbileImv.Component.Image do
     scene = Scenic.Scene.assign(scene, :tran, {0,0})
             |> Scenic.Scene.assign(:dim, {width,height})
             |> Scenic.Scene.assign(:scale, scale)
-            |> Scenic.Scene.assign(:scale, path)
+            |> Scenic.Scene.assign(:path, path)
     {:ok, Scenic.Scene.assign(scene, :id, opts[:id])}
   end
 
@@ -72,6 +74,7 @@ defmodule GerbileImv.Component.Image do
   def handle_input({:cursor_scroll, {{_, sc}, {pos_x, pos_y}}}, _, scene) do
     scene = if(sc != 0)do
       {:ok, {offset_x, offset_y}} = Scenic.Scene.fetch(scene, :tran)
+
       {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
       {:ok, {width, height}} = Scenic.Scene.fetch(scene, :dim)
       {:ok, graph} = Scenic.Scene.fetch(scene, :graph)
@@ -96,6 +99,7 @@ defmodule GerbileImv.Component.Image do
   def handle_input({:key, {key, i, _}}, _, scene) do
     if(i != 0) do
       {:ok, {offset_x, offset_y}} = Scenic.Scene.fetch(scene, :tran)
+
       {:ok, {scale, scale}} = Scenic.Scene.fetch(scene, :scale)
       {:ok, {width, height}} = Scenic.Scene.fetch(scene, :dim)
       {:ok, path} = Scenic.Scene.fetch(scene, :path)

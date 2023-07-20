@@ -10,7 +10,7 @@ config :scenic_app, :viewport,
   name: :main_viewport,
   size: {800, 600},
   theme: :dark,
-  default_scene: GerbileImv.Scene.Components,
+  default_scene: GerbileImv.Scene.DirTree,
   drivers: [
     [
       module: Scenic.Driver.Local,

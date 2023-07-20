@@ -47,10 +47,10 @@ defmodule GerbileImv.Scene.ImageZoom do
   @impl Scenic.Scene
   def handle_event({:click, :back_button}, _, scene)do
     {:ok, p} = fetch(scene, :img)
-    if(Scenic.Assets.Stream.exists?("loaded_image")) do
-      :ok = Scenic.Assets.Stream.delete("loaded_image")
-      IO.puts("deleting #{Scenic.Assets.Stream.exists?("loaded_image")}")
-    end
+    #if(Scenic.Assets.Stream.exists?("loaded_image")) do
+    #  :ok = Scenic.Assets.Stream.delete("loaded_image")
+    #  IO.puts("deleting #{Scenic.Assets.Stream.exists?("loaded_image")}")
+    #end
     Scenic.ViewPort.set_root(scene.viewport, GerbileImv.Scene.DirTree, %{path: Path.dirname(p)})
   end
 
